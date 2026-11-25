@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Symmetry Explorer — Class Toolkit</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --navy: #0f172a;
+      --text: #1e293b;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --accent: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Classroom Header */
+    header {
+      background: var(--navy);
+      color: #ffffff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    /* Mode Switcher Tabs */
+    .mode-tabs {
+      display: flex;
+      background: #1e293b;
+      padding: 4px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      gap: 4px;
+    }
+
+    .mode-tab {
+      background: transparent;
+      color: #cbd5e1;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-tab:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mode-tab.active {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .mode-tab.ext-tab.active {
+      background: #a855f7;
+      color: #ffffff;
+    }
+
+    .mode-tab.igcse-tab.active {
+      background: #f59e0b;
+      color: #0f172a;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .top-btn {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 2px solid #334155;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .top-btn:hover {
+      background: #334155;
+    }
+
+    .top-btn.quiz-locked {
+      background: #f59e0b;
+      color: #0f172a;
+      border-color: #f59e0b;
+    }
+
+    .top-btn.quiz-unlocked {
+      background: #10b981;
+      color: #0f172a;
+      border-color: #10b981;
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: 385px 1fr;
+      gap: 18px;
+      padding: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .workspace.igcse-layout {
+      grid-template-columns: 475px 1fr;
+    }
+
+    /* Left Panel */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .panel-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 2px solid var(--border);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .section-title {
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ext-pill {
+      background: #f3e8ff;
+      color: #7e22ce;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .igcse-pill {
+      background: #fef3c7;
+      color: #b45309;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    /* Grid Menu for 3D Solids */
+    .shape-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .shape-card {
+      background: #f8fafc;
+      border: 3px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 11px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shape-card:hover {
+      transform: translateY(-2px);
+      border-color: #94a3b8;
+    }
+
+    .shape-card.active {
+      background: #eff6ff;
+      border-color: var(--c-main);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-main) 25%, transparent);
+    }
+
+    .shape-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--c-main);
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .shape-name {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.2;
+    }
+
+    .shape-badge {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .shape-card.active .shape-badge {
+      background: var(--c-main);
+      color: #ffffff;
+    }
+
+    /* Locked Box in Quiz Mode */
+    .quiz-lock-box {
+      background: #fffbeb;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 16px 14px;
+      text-align: center;
+    }
+
+    .quiz-lock-box p {
+      font-size: 0.95rem;
+      color: #92400e;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .unlock-inline-btn {
+      background: #f59e0b;
+      color: #0f172a;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .unlock-inline-btn:hover {
+      background: #d97706;
+      color: #ffffff;
+    }
+
+    /* Plane Controls */
+    .plane-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: #f8fafc;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--navy);
+      transition: all 0.12s ease;
+    }
+
+    .action-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .action-btn.primary {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #ffffff;
+    }
+
+    .action-btn.primary:hover {
+      background: #6d28d9;
+    }
+
+    .plane-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .plane-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 0.94rem;
+      font-weight: 600;
+      text-align: left;
+      transition: all 0.12s ease;
+    }
+
+    .plane-toggle.on {
+      border-color: var(--p-color);
+      background: color-mix(in srgb, var(--p-color) 10%, white);
+    }
+
+    .color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--p-color);
+      flex-shrink: 0;
+      border: 2px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .sweep-slider-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .sweep-slider-box label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #92400e;
+    }
+
+    .sweep-slider-box input[type="range"] {
+      width: 100%;
+      accent-color: #d97706;
+      height: 8px;
+      cursor: pointer;
+    }
+
+    /* Axis Toggle Switch (Cube & Triangular Prism) */
+    .axis-toggle-box {
+      background: #f5f3ff;
+      border: 2px solid #c084fc;
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    .axis-toggle-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b21a8;
+      margin-bottom: 7px;
+      display: block;
+    }
+
+    .axis-toggle-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .axis-toggle-btn {
+      padding: 8px 6px;
+      border-radius: 9px;
+      border: 2px solid #e9d5ff;
+      background: #ffffff;
+      color: #581c87;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .axis-toggle-btn:hover {
+      border-color: #9333ea;
+    }
+
+    .axis-toggle-btn.active {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(124, 58, 237, 0.28);
+    }
+
+    /* Rotational Symmetry Controls */
+    .rot-readout-card {
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .rot-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .angle-display {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: var(--navy);
+    }
+
+    .match-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: #e2e8f0;
+      color: #475569;
+      transition: all 0.15s ease;
+    }
+
+    .match-pill.matched {
+      background: #10b981;
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    .rot-readout-card input[type="range"] {
+      width: 100%;
+      accent-color: #7c3aed;
+      height: 8px;
+      cursor: pointer;
+    }
+
+    .angle-chips {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .angle-chip {
+      flex: 1;
+      min-width: 58px;
+      text-align: center;
+      padding: 6px 4px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      background: #e2e8f0;
+      color: #334155;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .angle-chip.hit {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+    }
+
+    .rot-btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rot-btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .legend-note {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .red-dot-icon {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* iGCSE Qs Panel Styles */
+    .igcse-q-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .igcse-q-btn {
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.14s ease;
+    }
+
+    .igcse-q-btn:hover {
+      border-color: #94a3b8;
+    }
+
+    .igcse-q-btn.active {
+      background: #fffbeb;
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22);
+    }
+
+    .igcse-q-num {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .igcse-q-tag {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .igcse-q-btn.active .igcse-q-tag {
+      color: #b45309;
+    }
+
+    .exam-paper-box {
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .exam-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .marks-badge {
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .exam-prompt {
+      font-size: 0.98rem;
+      color: var(--navy);
+      line-height: 1.45;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .exam-parts {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .exam-part {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.4;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .exam-part-marks {
+      font-weight: 800;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .solution-box {
+      background: #f0fdf4;
+      border: 2px solid #16a34a;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .solution-ans-bar {
+      background: #dcfce7;
+      border: 1.5px solid #22c55e;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #14532d;
+      margin-bottom: 10px;
+    }
+
+    .solution-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.94rem;
+      color: #1e293b;
+      line-height: 1.45;
+    }
+
+    .solution-step {
+      background: #ffffff;
+      border-left: 4px solid #16a34a;
+      padding: 8px 10px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* Right Panel: 3D Canvas + Teaching Banner */
+    .stage-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .canvas-container {
+      position: relative;
+      flex: 1;
+      background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
+      border-radius: 18px;
+      border: 2px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+      cursor: grab;
+    }
+
+    .canvas-container:active {
+      cursor: grabbing;
+    }
+
+    #threeCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Floating Viewer Controls */
+    .viewer-toolbar {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .view-pill {
+      background: rgba(255, 255, 255, 0.92);
+      border: 2px solid #cbd5e1;
+      color: var(--navy);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .view-pill.active {
+      background: var(--navy);
+      color: #ffffff;
+      border-color: var(--navy);
+    }
+
+    .drag-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      background: rgba(15, 23, 42, 0.75);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    /* Classroom Summary Banner */
+    .info-banner {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px 22px;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .info-text h2 {
+      font-size: 1.35rem;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .info-text p {
+      font-size: 1.02rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .count-callout {
+      background: #eff6ff;
+      border: 3px solid #2563eb;
+      border-radius: 14px;
+      padding: 10px 22px;
+      text-align: center;
+      min-width: 185px;
+      flex-shrink: 0;
+    }
+
+    .count-callout.ext-callout {
+      background: #f3e8ff;
+      border-color: #7c3aed;
+    }
+
+    .count-callout.igcse-callout {
+      background: #f0fdf4;
+      border-color: #16a34a;
+    }
+
+    .count-callout.locked-callout {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .count-number {
+      font-size: 2.05rem;
+      font-weight: 900;
+      color: #1d4ed8;
+      line-height: 1.15;
+    }
+
+    .count-callout.ext-callout .count-number {
+      color: #6d28d9;
+    }
+
+    .count-callout.igcse-callout .count-number {
+      color: #15803d;
+      font-size: 1.65rem;
+    }
+
+    .count-callout.locked-callout .count-number {
+      color: #b45309;
+    }
+
+    .count-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #1e40af;
+      letter-spacing: 0.5px;
+    }
+
+    .count-callout.ext-callout .count-label {
+      color: #5b21b6;
+    }
+
+    .count-callout.igcse-callout .count-label {
+      color: #166534;
+    }
+
+    .count-callout.locked-callout .count-label {
+      color: #92400e;
+    }
+
+    /* Password Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.68);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 26px;
+      width: 100%;
+      max-width: 400px;
+      border: 3px solid var(--navy);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-card h3 {
+      font-size: 1.35rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .modal-card p {
+      font-size: 0.98rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 1.1rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: #2563eb;
+    }
+
+    .modal-error {
+      color: #dc2626;
+      font-size: 0.9rem;
+      font-weight: 700;
+      min-height: 22px;
+      margin-bottom: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      color: var(--navy);
+    }
+
+    .modal-btn.submit {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .modal-btn.submit:hover {
+      background: #1d4ed8;
+    }
+
+    @media (max-width: 1120px) {
+      body { overflow: auto; height: auto; }
+      header { flex-wrap: wrap; }
+      .workspace, .workspace.igcse-layout { grid-template-columns: 1fr; }
+      .canvas-container { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-badge">Class Toolkit</span>
+      <h1>3D Symmetry Explorer</h1>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="mode-tabs">
+      <button id="tabPlane" class="mode-tab active" onclick="switchMode('plane')">
+        📐 Plane Symmetry
+      </button>
+      <button id="tabRot" class="mode-tab ext-tab" onclick="switchMode('rotational')">
+        🔄 Rotational Symmetry
+      </button>
+      <button id="tabIgcse" class="mode-tab igcse-tab" onclick="switchMode('igcse')">
+        📝 iGCSE Qs
+      </button>
+    </div>
+
+    <div class="header-controls">
+      <button id="quizBtn" class="top-btn quiz-locked" onclick="handleQuizButtonClick()">
+        🔒 Quiz Mode: ON (Unlock Answers)
+      </button>
+    </div>
+  </header>
+
+  <div class="workspace" id="workspaceGrid">
+    <!-- Left Column: Controls -->
+    <aside class="sidebar">
+      <!-- Solid Selector Grid (Plane & Rotational Modes) -->
+      <div class="panel-card" id="solidSelectorCard">
+        <div class="section-title">
+          <span id="step1Title">1. Select a 3D Solid</span>
+          <span id="extBadge" class="ext-pill" style="display:none;">2 Axis Types</span>
+        </div>
+        <div class="shape-grid" id="shapeGrid"></div>
+      </div>
+
+      <!-- Plane Symmetry Controls (Visible in Plane Mode) -->
+      <div class="panel-card" id="planeControlsCard">
+        <div class="section-title">2. Planes of Symmetry</div>
+
+        <!-- Always Available Plane Toggles -->
+        <div id="planeUnlockedView">
+          <div class="plane-actions">
+            <button class="action-btn" onclick="setAllPlanes(true)">Show All</button>
+            <button class="action-btn" onclick="setAllPlanes(false)">Hide All</button>
+          </div>
+          <div class="plane-list" id="planeList"></div>
+        </div>
+
+        <!-- Interactive Slider for Cone & Cylinder -->
+        <div class="sweep-slider-box" id="sweepSliderBox">
+          <label for="sweepAngle">🔄 Spin Vertical Plane (0° – 180°): <span id="sweepDeg">0°</span></label>
+          <input type="range" id="sweepAngle" min="0" max="180" value="0" oninput="updateSweepPlane(this.value)" />
+        </div>
+      </div>
+
+      <!-- Rotational Symmetry Controls (Visible in Rotational Mode) -->
+      <div class="panel-card" id="rotControlsCard" style="display:none;">
+        <div class="section-title" id="rotSectionTitle">2. Rotate About Axis</div>
+
+        <!-- Dynamic Axis Toggle for Cube & Triangular Prism -->
+        <div class="axis-toggle-box" id="axisToggleBox">
+          <span class="axis-toggle-label">🧭 Choose Rotation Axis:</span>
+          <div class="axis-toggle-group" id="axisToggleGroup"></div>
+        </div>
+
+        <div class="rot-readout-card">
+          <div class="rot-top-row">
+            <span class="angle-display" id="rotAngleText">0°</span>
+            <span class="match-pill matched" id="matchBadge">Start Position (0°)</span>
+          </div>
+          <input type="range" id="rotSlider" min="0" max="360" value="0" oninput="onRotSliderChange(this.value)" />
+          <div class="angle-chips" id="angleChips"></div>
+        </div>
+
+        <div class="rot-btn-stack">
+          <button class="action-btn primary" id="stepRotBtn" onclick="stepNextSymmetry()">
+            ▶ Step +90° (Next Match)
+          </button>
+          <div class="rot-btn-row">
+            <button class="action-btn" id="fullSpinBtn" onclick="playFull360()">
+              🔄 Play 360° Turn
+            </button>
+            <button class="action-btn" onclick="resetRotationAngle()">
+              ↺ Reset 0°
+            </button>
+          </div>
+        </div>
+
+        <div class="legend-note">
+          <span class="red-dot-icon"></span>
+          <span>Red dot tracks one corner; dashed outline shows the starting footprint.</span>
+        </div>
+      </div>
+
+      <!-- iGCSE Past Paper Question Selector (Visible in iGCSE Mode) -->
+      <div class="panel-card" id="igcseSelectorCard" style="display:none;">
+        <div class="section-title">
+          <span>1. Select Past Paper Question</span>
+          <span class="igcse-pill">Cambridge 0580</span>
+        </div>
+        <div class="igcse-q-grid" id="igcseQGrid"></div>
+      </div>
+
+      <!-- iGCSE Question & Worked Solution Card (Visible in iGCSE Mode) -->
+      <div class="panel-card" id="igcseContentCard" style="display:none;">
+        <div class="section-title">
+          <span>2. Exam Question</span>
+          <span id="igcseRefLabel" style="font-size: 0.78rem; color: #64748b;">0580/23</span>
+        </div>
+
+        <div class="exam-paper-box">
+          <div class="exam-meta">
+            <span id="igcseTopicTag">3D Symmetry</span>
+            <span class="marks-badge" id="igcseTotalMarks">[2 marks]</span>
+          </div>
+          <div class="exam-prompt" id="igcsePrompt"></div>
+          <div class="exam-parts" id="igcseParts"></div>
+        </div>
+
+        <div class="section-title" style="margin-top: 16px;">
+          <span>3. Worked Solution</span>
+        </div>
+
+        <!-- Locked View in Quiz Mode -->
+        <div id="igcseLockedView" class="quiz-lock-box">
+          <p>🔒 Full worked solutions and 3D symmetry planes are hidden in Quiz Mode. Inspect the 3D solid on the right first!</p>
+          <button class="unlock-inline-btn" onclick="openPasswordModal()">🔑 Enter Password to Unlock Solution</button>
+        </div>
+
+        <!-- Unlocked Worked Solution -->
+        <div id="igcseUnlockedView" class="solution-box" style="display:none;">
+          <div class="solution-ans-bar" id="igcseFinalAns"></div>
+          <div class="solution-steps" id="igcseSteps"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Column: Interactive 3D Stage & Teaching Notes -->
+    <main class="stage-wrapper">
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="threeCanvas"></canvas>
+        <div class="viewer-toolbar">
+          <button class="view-pill active" id="rotateBtn" onclick="toggleAutoRotate()">⟳ Auto-Spin: ON</button>
+          <button class="view-pill" id="xrayBtn" onclick="toggleXray()">🔍 X-Ray Solid</button>
+          <button class="view-pill" onclick="resetCamera()">🎯 Reset View</button>
+        </div>
+        <div class="drag-hint">🖱️ Drag to rotate camera • Scroll to zoom</div>
+      </div>
+
+      <div class="info-banner">
+        <div class="info-text">
+          <h2 id="solidTitle">Cuboid</h2>
+          <p id="solidDesc">Total count is locked in Quiz Mode. Click the plane buttons on the left to toggle planes of symmetry on the 3D solid, then enter the password to reveal the total.</p>
+        </div>
+        <div class="count-callout locked-callout" id="countBox">
+          <div class="count-number" id="solidCount">?</div>
+          <div class="count-label" id="countLabel">Planes of Symmetry</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Teacher Password Modal -->
+  <div class="modal-backdrop" id="passwordModal" onclick="if(event.target === this) closePasswordModal()">
+    <div class="modal-card">
+      <h3>🔑 Unlock Answers</h3>
+      <p>Enter the teacher password to turn off Quiz Mode and reveal all answers &amp; worked solutions.</p>
+      <input
+        type="password"
+        id="passwordInput"
+        class="modal-input"
+        placeholder="Enter password..."
+        onkeydown="if(event.key === 'Enter') verifyPassword(); if(event.key === 'Escape') closePasswordModal();"
+      />
+      <div class="modal-error" id="passwordError"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="closePasswordModal()">Cancel</button>
+        <button class="modal-btn submit" onclick="verifyPassword()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // TEACHER PASSWORD
+    // ==========================================
+    const TEACHER_PASSWORD = '31415926';
+
+    // ==========================================
+    // 1. CURRICULUM DATA: PLANE SYMMETRY (8 SOLIDS)
+    // ==========================================
+    const PLANE_SOLIDS = [
+      {
+        id: 'cuboid',
+        name: 'Cuboid',
+        color: '#2563eb',
+        solidTint: 0x3b82f6,
+        countText: '3',
+        badgeText: '3 Planes',
+        description: 'A cuboid (with unequal length, width, and height) has 3 planes of symmetry—each slicing midway between opposite parallel faces. Diagonal cuts are NOT symmetrical.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>`,
+        planes: [
+          { name: 'Vertical (Left–Right)', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Horizontal (Top–Bottom)', color: '#10b981', hex: 0x10b981 },
+          { name: 'Vertical (Front–Back)', color: '#f59e0b', hex: 0xf59e0b }
+        ]
+      },
+      {
+        id: 'cube',
+        name: 'Cube',
+        color: '#4f46e5',
+        solidTint: 0x6366f1,
+        countText: '9',
+        badgeText: '9 Planes',
+        description: 'A cube has 9 planes of symmetry in total: 3 axial planes slicing midway between opposite parallel faces, plus 6 diagonal planes passing through opposite parallel edges.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/><path d="M12 2v18"/><path d="M4 6.5l8 4.5 8-4.5"/></svg>`,
+        planes: [
+          { name: 'Axial: Vertical (Left–Right)', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Axial: Horizontal (Top–Bottom)', color: '#10b981', hex: 0x10b981 },
+          { name: 'Axial: Vertical (Front–Back)', color: '#3b82f6', hex: 0x3b82f6 },
+          { name: 'Diagonal 1 (Vertical Edges)', color: '#f59e0b', hex: 0xf59e0b },
+          { name: 'Diagonal 2 (Vertical Edges)', color: '#d97706', hex: 0xd97706 },
+          { name: 'Diagonal 3 (Front–Back Edges)', color: '#8b5cf6', hex: 0x8b5cf6 },
+          { name: 'Diagonal 4 (Front–Back Edges)', color: '#7c3aed', hex: 0x7c3aed },
+          { name: 'Diagonal 5 (Left–Right Edges)', color: '#ec4899', hex: 0xec4899 },
+          { name: 'Diagonal 6 (Left–Right Edges)', color: '#db2777', hex: 0xdb2777 }
+        ]
+      },
+      {
+        id: 'cylinder',
+        name: 'Cylinder',
+        color: '#0891b2',
+        solidTint: 0x06b6d4,
+        countText: '∞',
+        badgeText: 'Infinite (∞)',
+        description: 'A right circular cylinder has infinitely many planes of symmetry: 1 horizontal plane midway between its circular ends, plus infinitely many vertical planes passing through its central axis.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v14c0 1.66 3.13 3 7 3s7-1.34 7-3V5"/></svg>`,
+        planes: [
+          { name: 'Horizontal Mid-Plane', color: '#10b981', hex: 0x10b981 },
+          { name: 'Interactive Spinning Plane', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Sample Vertical Plane (45°)', color: '#3b82f6', hex: 0x3b82f6 },
+          { name: 'Sample Vertical Plane (90°)', color: '#f59e0b', hex: 0xf59e0b },
+          { name: 'Sample Vertical Plane (135°)', color: '#8b5cf6', hex: 0x8b5cf6 }
+        ]
+      },
+      {
+        id: 'cone',
+        name: 'Cone',
+        color: '#d97706',
+        solidTint: 0xf59e0b,
+        countText: '∞',
+        badgeText: 'Infinite (∞)',
+        description: 'A right circular cone has infinitely many planes of symmetry. Every vertical plane passing through the apex (top tip) and center of the circular base divides it into mirror halves.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L4 18c0 2.2 3.6 4 8 4s8-1.8 8-4L12 3z"/><path d="M4 18c0-2.2 3.6-4 8-4s8 1.8 8 4" stroke-dasharray="3 3"/></svg>`,
+        planes: [
+          { name: 'Interactive Spinning Plane', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Sample Vertical Plane (45°)', color: '#3b82f6', hex: 0x3b82f6 },
+          { name: 'Sample Vertical Plane (90°)', color: '#10b981', hex: 0x10b981 },
+          { name: 'Sample Vertical Plane (135°)', color: '#8b5cf6', hex: 0x8b5cf6 }
+        ]
+      },
+      {
+        id: 'square_pyramid',
+        name: 'Square Pyramid',
+        color: '#059669',
+        solidTint: 0x10b981,
+        countText: '4',
+        badgeText: '4 Planes',
+        description: 'A right square pyramid has 4 vertical planes of symmetry passing through the apex: 2 bisecting opposite base edges, and 2 passing diagonally through opposite corners.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L3 16l9 5 9-5L12 3z"/><path d="M12 3v18"/></svg>`,
+        planes: [
+          { name: 'Edge Bisector (Left–Right)', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Edge Bisector (Front–Back)', color: '#3b82f6', hex: 0x3b82f6 },
+          { name: 'Corner Diagonal 1', color: '#f59e0b', hex: 0xf59e0b },
+          { name: 'Corner Diagonal 2', color: '#8b5cf6', hex: 0x8b5cf6 }
+        ]
+      },
+      {
+        id: 'rect_pyramid',
+        name: 'Rectangular Pyramid',
+        color: '#7c3aed',
+        solidTint: 0x8b5cf6,
+        countText: '2',
+        badgeText: '2 Planes',
+        description: 'Because the base has unequal length and width, a rectangular pyramid has only 2 planes of symmetry (bisecting opposite base edges). Diagonal slices do NOT match up.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L2 16l10 5 10-5L12 3z"/><path d="M12 3v18"/></svg>`,
+        planes: [
+          { name: 'Bisects Long Edges', color: '#ef4444', hex: 0xef4444 },
+          { name: 'Bisects Short Edges', color: '#10b981', hex: 0x10b981 }
+        ]
+      },
+      {
+        id: 'tri_prism',
+        name: 'Equilateral Tri. Prism',
+        color: '#dc2626',
+        solidTint: 0xef4444,
+        countText: '4',
+        badgeText: '4 Planes',
+        description: 'An equilateral triangular prism has 4 planes of symmetry: 1 cross-sectional plane midway between the triangular ends, plus 3 longitudinal planes slicing through each vertex.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L3 19h18L12 3z"/><path d="M12 3v16"/></svg>`,
+        planes: [
+          { name: 'Horizontal Mid-Slice', color: '#10b981', hex: 0x10b981 },
+          { name: 'Longitudinal Plane 1 (Vertex A)', color: '#2563eb', hex: 0x2563eb },
+          { name: 'Longitudinal Plane 2 (Vertex B)', color: '#f59e0b', hex: 0xf59e0b },
+          { name: 'Longitudinal Plane 3 (Vertex C)', color: '#8b5cf6', hex: 0x8b5cf6 }
+        ]
+      },
+      {
+        id: 'iso_tri_prism',
+        name: 'Isosceles Tri. Prism',
+        color: '#db2777',
+        solidTint: 0xec4899,
+        countText: '2',
+        badgeText: '2 Planes',
+        description: 'Because the triangular base has only 2 equal sides (isosceles), this prism has only 2 planes of symmetry: 1 horizontal mid-slice between the ends, and 1 longitudinal plane bisecting the apex.',
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L5 20h14L12 2z"/><path d="M12 2v18" stroke-dasharray="2.5 2.5"/></svg>`,
+        planes: [
+          { name: 'Horizontal Mid-Slice', color: '#10b981', hex: 0x10b981 },
+          { name: 'Longitudinal Apex Bisector', color: '#2563eb', hex: 0x2563eb }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // 2. ROTATIONAL SYMMETRY DATA
+    // ==========================================
+    const ROTATIONAL_SOLIDS = [
+      {
+        id: 'cube',
+        name: 'Cube',
+        color: '#7c3aed',
+        solidTint: 0x8b5cf6,
+        badgeText: 'Order 4',
+        axisTypesCount: '2 Axis Types',
+        defaultAxis: 'base',
+        axes: {
+          base: {
+            shortTitle: '↕ Main Axis',
+            subText: '(Through Base)',
+            label: 'Main Axis (Through Base)',
+            sectionTitle: '2. Rotate About Main Axis (Through Base)',
+            order: 4,
+            stepDeg: 90,
+            matchAngles: [90, 180, 270, 360],
+            axisVec: [0, 1, 0],
+            rodLength: 4.8,
+            description: 'About the main vertical axis passing through the centers of the top and bottom square bases, a cube matches its starting outline 4 times in one 360° turn—every 90° (90°, 180°, 270°, 360°).'
+          },
+          side: {
+            shortTitle: '↔ Side Axis',
+            subText: '(Through Sides)',
+            label: 'Side Axis (Through Sides)',
+            sectionTitle: '2. Rotate About Side Axis (Through Sides)',
+            order: 4,
+            stepDeg: 90,
+            matchAngles: [90, 180, 270, 360],
+            axisVec: [0, 0, 1],
+            rodLength: 4.8,
+            description: 'About a horizontal side axis passing through the centers of opposite side faces, a cube also matches its starting outline 4 times in one 360° turn—every 90° (90°, 180°, 270°, 360°).'
+          }
+        },
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/><path d="M12 2v18"/><path d="M4 6.5l8 4.5 8-4.5"/></svg>`
+      },
+      {
+        id: 'rot_tri_prism',
+        name: 'Equilateral Triangular Prism',
+        color: '#db2777',
+        solidTint: 0xec4899,
+        badgeText: 'Order 3 / 2',
+        axisTypesCount: '2 Axis Types',
+        defaultAxis: 'main',
+        axes: {
+          main: {
+            shortTitle: '↕ Main Axis',
+            subText: '(Through Base)',
+            label: 'Main Axis (Through Base)',
+            sectionTitle: '2. Rotate About Main Axis (Through Base)',
+            order: 3,
+            stepDeg: 120,
+            matchAngles: [120, 240, 360],
+            axisVec: [0, 1, 0],
+            rodLength: 4.8,
+            description: 'About its main central axis passing through the centers of both equilateral triangular bases, the prism matches its starting outline 3 times in one 360° turn—every 120° (120°, 240°, 360°).'
+          },
+          side: {
+            shortTitle: '↔ Side Axis',
+            subText: '(Through Side)',
+            label: 'Side Axis (Through Side)',
+            sectionTitle: '2. Rotate About Side Axis (Through Side)',
+            order: 2,
+            stepDeg: 180,
+            matchAngles: [180, 360],
+            axisVec: [0, 0, 1],
+            rodLength: 4.8,
+            description: 'About a side axis passing horizontally through the midpoint of one vertical edge and the center of the opposite rectangular side, the prism flips upside down and matches its starting outline 2 times in a 360° turn—at 180° and 360°.'
+          }
+        },
+        icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L3 19h18L12 3z"/><path d="M12 1v21" stroke-dasharray="2 2"/></svg>`
+      }
+    ];
+
+    // ==========================================
+    // 3. PAST iGCSE QUESTIONS DATA (CAMBRIDGE 0580)
+    // ==========================================
+    const IGCSE_QUESTIONS = [
+      {
+        id: 'igcse_q1',
+        shortLabel: 'Q1',
+        tag: 'Square Pyramid',
+        paperRef: '0580/23/M/J',
+        topic: 'Planes & Axis of Symmetry',
+        totalMarks: '[2 marks]',
+        solidTint: 0x10b981,
+        prompt: 'A right pyramid has a square base ABCD with centre M. Its apex E is vertically above M.',
+        parts: [
+          { label: '(a) Write down the number of planes of symmetry of this pyramid.', marks: '[1]' },
+          { label: '(b) Write down the order of rotational symmetry of the pyramid about the vertical axis EM.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 4 planes   |   (b) Order 4',
+        calloutValue: '4 & 4',
+        calloutLabel: '(a) Planes | (b) Order',
+        bannerTakeaway: 'A right square pyramid has 4 vertical planes of symmetry through the apex (2 edge-bisectors + 2 corner-diagonals) and rotational symmetry of order 4 about EM.',
+        steps: [
+          '<strong>Part (a) — 4 planes of symmetry:</strong> Because the base is a square (4 lines of symmetry) and E is directly above M, every line of symmetry of the base extends vertically up through E to form a plane of symmetry: <strong>2 planes</strong> bisect opposite base edges, and <strong>2 diagonal planes</strong> pass through opposite base corners (AC and BD).',
+          '<strong>Part (b) — Order 4:</strong> Rotating the pyramid around the vertical line EM maps the square base onto itself every 360° ÷ 4 = <strong>90°</strong> (at 90°, 180°, 270°, and 360°).'
+        ]
+      },
+      {
+        id: 'igcse_q2',
+        shortLabel: 'Q2',
+        tag: 'Square Cuboid',
+        paperRef: '0580/22/O/N',
+        topic: 'Prism with Square Cross-Section',
+        totalMarks: '[2 marks]',
+        solidTint: 0x3b82f6,
+        prompt: 'A cuboid has a square cross-section of side 4 cm and a length of 10 cm (it is not a cube).',
+        parts: [
+          { label: '(a) Write down the number of planes of symmetry of this cuboid.', marks: '[1]' },
+          { label: '(b) Write down the order of rotational symmetry about the axis through the centres of the two square faces.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 5 planes   |   (b) Order 4',
+        calloutValue: '5 & 4',
+        calloutLabel: '(a) Planes | (b) Order',
+        bannerTakeaway: 'Unlike a general cuboid (3 planes), a cuboid with two square ends has 5 planes of symmetry because the square cross-section allows 2 diagonal cuts along its length.',
+        steps: [
+          '<strong>Part (a) — 5 planes of symmetry:</strong><br>• <strong>1 cross-sectional plane</strong> cutting midway along the 10 cm length.<br>• <strong>4 longitudinal planes</strong> along the length, corresponding to the 4 lines of symmetry of the square end (2 bisecting opposite square sides + 2 diagonal planes joining opposite corners).<br>• Total = 1 + 4 = <strong>5</strong>.',
+          '<strong>Part (b) — Order 4:</strong> Looking end-on along the axis joining the centres of the two square faces, the cross-section is a square, which maps onto itself every <strong>90°</strong> (4 times in a 360° turn).'
+        ]
+      },
+      {
+        id: 'igcse_q3',
+        shortLabel: 'Q3',
+        tag: 'Rect. Pyramid',
+        paperRef: '0580/21/M/J',
+        topic: 'Rectangular-Based Pyramid',
+        totalMarks: '[2 marks]',
+        solidTint: 0x8b5cf6,
+        prompt: 'A right pyramid has a rectangular base (length ≠ width). Its vertex is vertically above the centre of the base.',
+        parts: [
+          { label: '(a) Write down the number of planes of symmetry for this pyramid.', marks: '[1]' },
+          { label: '(b) Explain why a vertical diagonal cut through opposite base corners is NOT a plane of symmetry.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 2 planes   |   (b) Unequal adjacent sides',
+        calloutValue: '2 Planes',
+        calloutLabel: 'Rect. Pyramid',
+        bannerTakeaway: 'A rectangular pyramid has only 2 planes of symmetry (bisecting opposite edges). Diagonal slices fail because a rectangle’s adjacent sides have different lengths.',
+        steps: [
+          '<strong>Part (a) — 2 planes of symmetry:</strong> Only the <strong>2 vertical planes</strong> passing through the vertex and bisecting opposite pairs of parallel edges divide the pyramid into mirror halves.',
+          '<strong>Part (b) — Reason:</strong> Because the base is a non-square rectangle, adjacent sides have <strong>different lengths</strong> (and diagonals are not perpendicular bisectors of each other). Reflecting one corner across a diagonal does not land on the other corner.'
+        ]
+      },
+      {
+        id: 'igcse_q4',
+        shortLabel: 'Q4',
+        tag: 'Tri. Prism',
+        paperRef: '0580/22/F/M',
+        topic: 'Equilateral Triangular Prism',
+        totalMarks: '[2 marks]',
+        solidTint: 0xef4444,
+        prompt: 'The solid shown is a right prism whose cross-section is an equilateral triangle.',
+        parts: [
+          { label: '(a) Write down the number of planes of symmetry of this prism.', marks: '[1]' },
+          { label: '(b) Write down the order of rotational symmetry about the central axis passing through the centres of both triangular faces.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 4 planes   |   (b) Order 3',
+        calloutValue: '4 & 3',
+        calloutLabel: '(a) Planes | (b) Order',
+        bannerTakeaway: 'An equilateral triangular prism has 4 planes of symmetry (1 horizontal mid-slice + 3 longitudinal vertex-to-midpoint planes) and rotational symmetry of order 3.',
+        steps: [
+          '<strong>Part (a) — 4 planes of symmetry:</strong><br>• <strong>1 cross-sectional plane</strong> midway between the two equilateral triangular faces.<br>• <strong>3 longitudinal planes</strong>, each passing through one triangular vertex and bisecting the opposite rectangular face.<br>• Total = 1 + 3 = <strong>4</strong>.',
+          '<strong>Part (b) — Order 3:</strong> Rotating around the central axis maps the equilateral triangle cross-section onto itself every 360° ÷ 3 = <strong>120°</strong> (at 120°, 240°, and 360°).'
+        ]
+      },
+      {
+        id: 'igcse_q5',
+        shortLabel: 'Q5',
+        tag: 'Hex. Prism',
+        paperRef: '0580/42/O/N',
+        topic: 'Regular Polygon Prism Rule',
+        totalMarks: '[3 marks]',
+        solidTint: 0x06b6d4,
+        prompt: 'A right prism has a cross-section that is a regular hexagon.',
+        parts: [
+          { label: '(a) Write down the number of planes of symmetry of this hexagonal prism.', marks: '[1]' },
+          { label: '(b) Write down the order of rotational symmetry about the axis through the centres of the two hexagonal faces.', marks: '[1]' },
+          { label: '(c) A prism has a regular n-sided polygon cross-section. Write an expression in terms of n for its number of planes of symmetry.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 7 planes   |   (b) Order 6   |   (c) n + 1',
+        calloutValue: '7 & n+1',
+        calloutLabel: 'Hex. Prism Rule',
+        bannerTakeaway: 'General iGCSE rule: A right prism with a regular n-sided polygon cross-section always has n + 1 planes of symmetry and rotational order n about its main axis.',
+        steps: [
+          '<strong>Part (a) — 7 planes of symmetry:</strong><br>• <strong>1 cross-sectional plane</strong> midway along the prism’s length.<br>• <strong>6 longitudinal planes</strong> from the 6 lines of symmetry of a regular hexagon (3 connecting opposite vertices + 3 bisecting opposite edges).<br>• Total = 1 + 6 = <strong>7</strong>.',
+          '<strong>Part (b) — Order 6:</strong> A regular hexagon maps onto itself every 360° ÷ 6 = <strong>60°</strong> (6 times per turn).',
+          '<strong>Part (c) — Expression:</strong> <strong>n + 1</strong> (1 mid-slice perpendicular to the length plus n longitudinal planes).'
+        ]
+      },
+      {
+        id: 'igcse_q6',
+        shortLabel: 'Q6',
+        tag: 'Cube (9 Planes)',
+        paperRef: '0580/41/M/J',
+        topic: 'Extended Challenge: Cube',
+        totalMarks: '[3 marks]',
+        solidTint: 0x2563eb,
+        prompt: 'The diagram shows a cube.',
+        parts: [
+          { label: '(a) Write down the total number of planes of symmetry of a cube.', marks: '[2]' },
+          { label: '(b) State the order of rotational symmetry of a cube about an axis passing through the centres of two opposite faces.', marks: '[1]' }
+        ],
+        finalAnswerSummary: '(a) 9 planes   |   (b) Order 4',
+        calloutValue: '9 & 4',
+        calloutLabel: '(a) Planes | (b) Order',
+        bannerTakeaway: 'A cube has 9 planes of symmetry in total: 3 planes parallel to the faces (slicing midway between opposite faces) plus 6 diagonal planes through opposite edges.',
+        steps: [
+          '<strong>Part (a) — 9 planes of symmetry:</strong><br>• <strong>3 axial planes</strong> parallel to the faces (slicing midway between each of the 3 pairs of opposite faces).<br>• <strong>6 diagonal planes</strong>, each passing through a pair of opposite parallel edges (a cube has 12 edges = 6 pairs of opposite edges).<br>• Total = 3 + 6 = <strong>9 planes</strong>.',
+          '<strong>Part (b) — Order 4:</strong> Each face of a cube is a square, so rotating around an axis through opposite face centres maps the cube onto itself every <strong>90°</strong> (order 4).'
+        ]
+      }
+    ];
+
+    // ==========================================
+    // 4. THREE.JS SCENE & INTERACTION SETUP
+    // ==========================================
+    const container = document.getElementById('canvasContainer');
+    const canvas = document.getElementById('threeCanvas');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
+    // Classroom Studio Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.65);
+    dirLight1.position.set(6, 10, 7);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xe0f2fe, 0.35);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    // Subtle Floor Grid
+    const gridHelper = new THREE.GridHelper(10, 10, 0x94a3b8, 0xcbd5e1);
+    gridHelper.position.y = -2.3;
+    scene.add(gridHelper);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Global App State (Quiz Mode starts ON)
+    let appMode = 'plane'; // 'plane' | 'rotational' | 'igcse'
+    let currentPlaneSolid = PLANE_SOLIDS[0];
+    let currentRotSolid = ROTATIONAL_SOLIDS[0];
+    let currentIgcseQ = IGCSE_QUESTIONS[0];
+    let selectedRotAxes = {
+      cube: 'base',
+      rot_tri_prism: 'main'
+    };
+
+    let planeMeshes = [];
+    let planeStates = [];
+    let solidMesh = null;
+    let rotPivotGroup = null;
+
+    let isAutoRotate = true;
+    let isXray = false;
+    let isQuizMode = true;
+    let sweepPlaneMesh = null;
+    let sweepPlaneIndex = -1;
+
+    // Rotational Mode Animation State
+    let currentRotDeg = 0;
+    let targetRotDeg = 0;
+    let isAnimatingRot = false;
+
+    // Orbit Drag & Zoom State
+    let spherical = { radius: 8.2, theta: 0.65, phi: 1.15 };
+    let isDragging = false;
+    let prevPointer = { x: 0, y: 0 };
+
+    function updateCameraPosition() {
+      spherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, spherical.phi));
+      spherical.radius = Math.max(4.5, Math.min(15, spherical.radius));
+      camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.position.y = spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.lookAt(0, 0, 0);
+    }
+
+    function resetCamera() {
+      spherical = appMode === 'rotational'
+        ? { radius: 8.2, theta: 0.55, phi: 0.98 }
+        : { radius: 8.2, theta: 0.65, phi: 1.15 };
+      rootGroup.rotation.set(0, 0, 0);
+      updateCameraPosition();
+    }
+
+    container.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      prevPointer = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevPointer.x;
+      const dy = e.clientY - prevPointer.y;
+      spherical.theta -= dx * 0.008;
+      spherical.phi -= dy * 0.008;
+      updateCameraPosition();
+      prevPointer = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      spherical.radius += e.deltaY * 0.005;
+      updateCameraPosition();
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // ==========================================
+    // 5. PASSWORD & QUIZ MODE CONTROLS
+    // ==========================================
+    function handleQuizButtonClick() {
+      if (isQuizMode) {
+        openPasswordModal();
+      } else {
+        isQuizMode = true;
+        if (appMode === 'igcse') {
+          updateIgcsePlaneVisibility();
+        }
+        updateQuizHeaderButton();
+        renderUI();
+      }
+    }
+
+    function openPasswordModal() {
+      const modal = document.getElementById('passwordModal');
+      const input = document.getElementById('passwordInput');
+      const error = document.getElementById('passwordError');
+      input.value = '';
+      error.textContent = '';
+      modal.classList.add('open');
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.remove('open');
+    }
+
+    function verifyPassword() {
+      const input = document.getElementById('passwordInput').value.trim();
+      const error = document.getElementById('passwordError');
+
+      if (input === TEACHER_PASSWORD) {
+        isQuizMode = false;
+        closePasswordModal();
+        updateQuizHeaderButton();
+
+        if (appMode === 'igcse') {
+          updateIgcsePlaneVisibility();
+        }
+        renderUI();
+      } else {
+        error.textContent = 'Incorrect password. Please try again.';
+        document.getElementById('passwordInput').select();
+      }
+    }
+
+    function updateQuizHeaderButton() {
+      const btn = document.getElementById('quizBtn');
+      if (isQuizMode) {
+        btn.textContent = '🔒 Quiz Mode: ON (Unlock Answers)';
+        btn.classList.add('quiz-locked');
+        btn.classList.remove('quiz-unlocked');
+      } else {
+        btn.textContent = '🔓 Answers Unlocked (Lock Quiz)';
+        btn.classList.remove('quiz-locked');
+        btn.classList.add('quiz-unlocked');
+      }
+    }
+
+    // ==========================================
+    // 6. MODE SWITCHING
+    // ==========================================
+    function switchMode(newMode) {
+      appMode = newMode;
+      isAnimatingRot = false;
+
+      document.getElementById('tabPlane').classList.toggle('active', newMode === 'plane');
+      document.getElementById('tabRot').classList.toggle('active', newMode === 'rotational');
+      document.getElementById('tabIgcse').classList.toggle('active', newMode === 'igcse');
+
+      document.getElementById('workspaceGrid').classList.toggle('igcse-layout', newMode === 'igcse');
+
+      document.getElementById('solidSelectorCard').style.display = newMode === 'igcse' ? 'none' : 'block';
+      document.getElementById('planeControlsCard').style.display = newMode === 'plane' ? 'block' : 'none';
+      document.getElementById('rotControlsCard').style.display = newMode === 'rotational' ? 'block' : 'none';
+      document.getElementById('igcseSelectorCard').style.display = newMode === 'igcse' ? 'block' : 'none';
+      document.getElementById('igcseContentCard').style.display = newMode === 'igcse' ? 'block' : 'none';
+      document.getElementById('extBadge').style.display = newMode === 'rotational' ? 'inline-block' : 'none';
+
+      const rotateBtn = document.getElementById('rotateBtn');
+      if (newMode === 'rotational') {
+        rotateBtn.style.display = 'none';
+        rootGroup.rotation.set(0, 0, 0);
+        spherical = { radius: 8.2, theta: 0.55, phi: 0.98 };
+        updateCameraPosition();
+        loadRotationalSolid(currentRotSolid.id);
+      } else if (newMode === 'plane') {
+        rotateBtn.style.display = 'inline-block';
+        spherical = { radius: 8.2, theta: 0.65, phi: 1.15 };
+        updateCameraPosition();
+        loadPlaneSolid(currentPlaneSolid.id);
+      } else {
+        rotateBtn.style.display = 'inline-block';
+        spherical = { radius: 8.2, theta: 0.65, phi: 1.12 };
+        updateCameraPosition();
+        loadIgcseQuestion(currentIgcseQ.id);
+      }
+    }
+
+    // ==========================================
+    // 7. PLANE SYMMETRY BUILDERS
+    // ==========================================
+    function createPlaneObject(width, height, hexColor) {
+      const group = new THREE.Group();
+      const geom = new THREE.PlaneGeometry(width, height);
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: hexColor,
+        transparent: true,
+        opacity: 0.34,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      group.add(new THREE.Mesh(geom, mat));
+
+      const edges = new THREE.EdgesGeometry(geom);
+      const lineMat = new THREE.LineBasicMaterial({ color: hexColor, linewidth: 2 });
+      group.add(new THREE.LineSegments(edges, lineMat));
+
+      return group;
+    }
+
+    function buildPlaneSolidGeometry(id) {
+      if (id === 'cuboid') return new THREE.BoxGeometry(3.8, 2.4, 1.7);
+      if (id === 'cube') return new THREE.BoxGeometry(2.35, 2.35, 2.35);
+      if (id === 'cylinder') return new THREE.CylinderGeometry(1.5, 1.5, 3.2, 48);
+      if (id === 'cone') return new THREE.ConeGeometry(1.75, 3.3, 48);
+      if (id === 'square_pyramid') {
+        const g = new THREE.ConeGeometry(2.15, 3.1, 4);
+        g.rotateY(Math.PI / 4);
+        return g;
+      }
+      if (id === 'rect_pyramid') {
+        const w = 3.5, h = 3.0, d = 2.0;
+        const hw = w / 2, hh = h / 2, hd = d / 2;
+        const vertices = new Float32Array([
+          -hw, -hh,  hd,   hw, -hh,  hd,   0, hh, 0,
+           hw, -hh,  hd,   hw, -hh, -hd,   0, hh, 0,
+           hw, -hh, -hd,  -hw, -hh, -hd,   0, hh, 0,
+          -hw, -hh, -hd,  -hw, -hh,  hd,   0, hh, 0,
+          -hw, -hh, -hd,   hw, -hh, -hd,   hw, -hh,  hd,
+          -hw, -hh, -hd,   hw, -hh,  hd,  -hw, -hh,  hd
+        ]);
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        g.computeVertexNormals();
+        return g;
+      }
+      if (id === 'tri_prism') return new THREE.CylinderGeometry(1.85, 1.85, 3.2, 3);
+      if (id === 'iso_tri_prism') {
+        const hh = 1.6;
+        const ax = 0, az = 1.95;
+        const bx = 1.05, bz = -1.25;
+        const cx = -1.05, cz = -1.25;
+
+        const vertices = new Float32Array([
+          ax,  hh, az,   bx,  hh, bz,   cx,  hh, cz,
+          ax, -hh, az,   cx, -hh, cz,   bx, -hh, bz,
+          ax, -hh, az,   bx, -hh, bz,   bx,  hh, bz,
+          ax, -hh, az,   bx,  hh, bz,   ax,  hh, az,
+          cx, -hh, cz,   ax, -hh, az,   ax,  hh, az,
+          cx, -hh, cz,   ax,  hh, az,   cx,  hh, cz,
+          bx, -hh, bz,   cx, -hh, cz,   cx,  hh, cz,
+          bx, -hh, bz,   cx,  hh, cz,   bx,  hh, bz
+        ]);
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        g.computeVertexNormals();
+        return g;
+      }
+    }
+
+    function buildPlanesForSolid(solid) {
+      const created = [];
+      sweepPlaneMesh = null;
+      sweepPlaneIndex = -1;
+
+      if (solid.id === 'cuboid') {
+        const p1 = createPlaneObject(2.6, 3.3, solid.planes[0].hex);
+        p1.rotation.y = Math.PI / 2;
+        created.push(p1);
+
+        const p2 = createPlaneObject(4.6, 2.6, solid.planes[1].hex);
+        p2.rotation.x = Math.PI / 2;
+        created.push(p2);
+
+        const p3 = createPlaneObject(4.6, 3.3, solid.planes[2].hex);
+        created.push(p3);
+      }
+
+      if (solid.id === 'cube') {
+        const p0 = createPlaneObject(3.15, 3.15, solid.planes[0].hex);
+        p0.rotation.y = Math.PI / 2;
+        created.push(p0);
+
+        const p1 = createPlaneObject(3.15, 3.15, solid.planes[1].hex);
+        p1.rotation.x = Math.PI / 2;
+        created.push(p1);
+
+        const p2 = createPlaneObject(3.15, 3.15, solid.planes[2].hex);
+        created.push(p2);
+
+        const p3 = createPlaneObject(3.85, 3.15, solid.planes[3].hex);
+        p3.rotation.y = Math.PI / 4;
+        created.push(p3);
+
+        const p4 = createPlaneObject(3.85, 3.15, solid.planes[4].hex);
+        p4.rotation.y = -Math.PI / 4;
+        created.push(p4);
+
+        const p5 = createPlaneObject(3.15, 3.85, solid.planes[5].hex);
+        p5.rotation.x = Math.PI / 4;
+        created.push(p5);
+
+        const p6 = createPlaneObject(3.15, 3.85, solid.planes[6].hex);
+        p6.rotation.x = -Math.PI / 4;
+        created.push(p6);
+
+        const p7 = createPlaneObject(3.15, 3.85, solid.planes[7].hex);
+        p7.rotation.order = 'ZYX';
+        p7.rotation.y = Math.PI / 2;
+        p7.rotation.z = Math.PI / 4;
+        created.push(p7);
+
+        const p8 = createPlaneObject(3.15, 3.85, solid.planes[8].hex);
+        p8.rotation.order = 'ZYX';
+        p8.rotation.y = Math.PI / 2;
+        p8.rotation.z = -Math.PI / 4;
+        created.push(p8);
+      }
+
+      if (solid.id === 'cylinder') {
+        const p0 = createPlaneObject(3.9, 3.9, solid.planes[0].hex);
+        p0.rotation.x = Math.PI / 2;
+        created.push(p0);
+
+        const p1 = createPlaneObject(3.9, 4.0, solid.planes[1].hex);
+        sweepPlaneMesh = p1;
+        sweepPlaneIndex = 1;
+        created.push(p1);
+
+        [Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4].forEach((angle, idx) => {
+          const p = createPlaneObject(3.9, 4.0, solid.planes[idx + 2].hex);
+          p.rotation.y = angle;
+          created.push(p);
+        });
+      }
+
+      if (solid.id === 'cone') {
+        const p0 = createPlaneObject(4.3, 4.1, solid.planes[0].hex);
+        sweepPlaneMesh = p0;
+        sweepPlaneIndex = 0;
+        created.push(p0);
+
+        [Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4].forEach((angle, idx) => {
+          const p = createPlaneObject(4.3, 4.1, solid.planes[idx + 1].hex);
+          p.rotation.y = angle;
+          created.push(p);
+        });
+      }
+
+      if (solid.id === 'square_pyramid') {
+        const p1 = createPlaneObject(3.8, 3.9, solid.planes[0].hex);
+        p1.rotation.y = Math.PI / 2;
+        created.push(p1);
+
+        const p2 = createPlaneObject(3.8, 3.9, solid.planes[1].hex);
+        created.push(p2);
+
+        const p3 = createPlaneObject(4.9, 3.9, solid.planes[2].hex);
+        p3.rotation.y = Math.PI / 4;
+        created.push(p3);
+
+        const p4 = createPlaneObject(4.9, 3.9, solid.planes[3].hex);
+        p4.rotation.y = -Math.PI / 4;
+        created.push(p4);
+      }
+
+      if (solid.id === 'rect_pyramid') {
+        const p1 = createPlaneObject(2.8, 3.8, solid.planes[0].hex);
+        p1.rotation.y = Math.PI / 2;
+        created.push(p1);
+
+        const p2 = createPlaneObject(4.3, 3.8, solid.planes[1].hex);
+        created.push(p2);
+      }
+
+      if (solid.id === 'tri_prism') {
+        const p1 = createPlaneObject(4.2, 4.2, solid.planes[0].hex);
+        p1.rotation.x = Math.PI / 2;
+        created.push(p1);
+
+        [Math.PI / 2, Math.PI / 6, -Math.PI / 6].forEach((angle, idx) => {
+          const p = createPlaneObject(4.1, 4.0, solid.planes[idx + 1].hex);
+          p.rotation.y = angle;
+          created.push(p);
+        });
+      }
+
+      if (solid.id === 'iso_tri_prism') {
+        const p1 = createPlaneObject(3.1, 4.1, solid.planes[0].hex);
+        p1.rotation.x = Math.PI / 2;
+        p1.position.z = 0.35;
+        created.push(p1);
+
+        const p2 = createPlaneObject(4.1, 4.0, solid.planes[1].hex);
+        p2.rotation.y = Math.PI / 2;
+        p2.position.z = 0.35;
+        created.push(p2);
+      }
+
+      return created;
+    }
+
+    function applyDefaultPlaneVisibility() {
+      planeStates = planeMeshes.map((_, idx) => idx === 0);
+      planeMeshes.forEach((mesh, idx) => {
+        mesh.visible = planeStates[idx];
+      });
+    }
+
+    function clearRootGroup() {
+      while (rootGroup.children.length > 0) {
+        rootGroup.remove(rootGroup.children[0]);
+      }
+      solidMesh = null;
+      rotPivotGroup = null;
+      planeMeshes = [];
+    }
+
+    function loadPlaneSolid(solidId) {
+      currentPlaneSolid = PLANE_SOLIDS.find(s => s.id === solidId);
+      clearRootGroup();
+
+      const geom = buildPlaneSolidGeometry(currentPlaneSolid.id);
+      const mat = new THREE.MeshPhongMaterial({
+        color: currentPlaneSolid.solidTint,
+        transparent: true,
+        opacity: isXray ? 0.22 : 0.62,
+        shininess: 60,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      solidMesh = new THREE.Mesh(geom, mat);
+
+      const edges = new THREE.EdgesGeometry(geom, 20);
+      solidMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a })));
+      rootGroup.add(solidMesh);
+
+      planeMeshes = buildPlanesForSolid(currentPlaneSolid);
+      planeMeshes.forEach(mesh => rootGroup.add(mesh));
+      applyDefaultPlaneVisibility();
+
+      document.getElementById('sweepAngle').value = 0;
+      document.getElementById('sweepDeg').textContent = '0°';
+
+      renderUI();
+    }
+
+    // ==========================================
+    // 8. ROTATIONAL SYMMETRY BUILDERS
+    // ==========================================
+    function getActiveRotConfig() {
+      const axisKey = selectedRotAxes[currentRotSolid.id] || currentRotSolid.defaultAxis;
+      return currentRotSolid.axes[axisKey];
+    }
+
+    function getNormalizedAxisVector() {
+      const cfg = getActiveRotConfig();
+      return new THREE.Vector3(...cfg.axisVec).normalize();
+    }
+
+    function createAxisIndicator(axisUnitVec, rodLength) {
+      const axisGroup = new THREE.Group();
+      const halfLen = rodLength / 2;
+
+      const rodGeom = new THREE.CylinderGeometry(0.055, 0.055, rodLength, 16);
+      const rodMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+      axisGroup.add(new THREE.Mesh(rodGeom, rodMat));
+
+      const capGeom = new THREE.SphereGeometry(0.12, 16, 16);
+      const capMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+      const topCap = new THREE.Mesh(capGeom, capMat);
+      topCap.position.y = halfLen;
+      const botCap = new THREE.Mesh(capGeom, capMat);
+      botCap.position.y = -halfLen;
+      axisGroup.add(topCap, botCap);
+
+      const ringY = halfLen - 0.25;
+      const ringGeom = new THREE.RingGeometry(0.45, 0.54, 48, 1, 0, Math.PI * 1.65);
+      ringGeom.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xd97706, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      ring.position.y = ringY;
+      axisGroup.add(ring);
+
+      const arrowGeom = new THREE.ConeGeometry(0.13, 0.28, 12);
+      arrowGeom.rotateZ(-Math.PI / 2);
+      const arrow = new THREE.Mesh(arrowGeom, ringMat);
+      arrow.position.set(0.49 * Math.cos(Math.PI * 1.65), ringY, -0.49 * Math.sin(Math.PI * 1.65));
+      arrow.rotation.y = Math.PI * 1.65 + Math.PI / 2;
+      axisGroup.add(arrow);
+
+      // Align local +Y rod onto the active axis vector
+      const upVec = new THREE.Vector3(0, 1, 0);
+      axisGroup.quaternion.setFromUnitVectors(upVec, axisUnitVec);
+
+      return axisGroup;
+    }
+
+    function setRotationAxis(axisKey) {
+      selectedRotAxes[currentRotSolid.id] = axisKey;
+      isAnimatingRot = false;
+      loadRotationalSolid(currentRotSolid.id);
+    }
+
+    function loadRotationalSolid(solidId) {
+      currentRotSolid = ROTATIONAL_SOLIDS.find(s => s.id === solidId);
+      clearRootGroup();
+      currentRotDeg = 0;
+      targetRotDeg = 0;
+      isAnimatingRot = false;
+
+      const activeCfg = getActiveRotConfig();
+      const axisUnitVec = getNormalizedAxisVector();
+
+      const geom = currentRotSolid.id === 'cube'
+        ? new THREE.BoxGeometry(2.5, 2.5, 2.5)
+        : new THREE.CylinderGeometry(1.85, 1.85, 3.0, 3);
+
+      // Stationary Ghost Wireframe
+      const ghostEdges = new THREE.EdgesGeometry(geom, 20);
+      const ghostLines = new THREE.LineSegments(
+        ghostEdges,
+        new THREE.LineDashedMaterial({
+          color: 0x64748b,
+          dashSize: 0.18,
+          gapSize: 0.12
+        })
+      );
+      ghostLines.computeLineDistances();
+      rootGroup.add(ghostLines);
+
+      // Axis Rod & Directional Spin Ring aligned to the chosen axis
+      rootGroup.add(createAxisIndicator(axisUnitVec, activeCfg.rodLength));
+
+      // Rotating Pivot Group
+      rotPivotGroup = new THREE.Group();
+      const mat = new THREE.MeshPhongMaterial({
+        color: currentRotSolid.solidTint,
+        transparent: true,
+        opacity: isXray ? 0.24 : 0.65,
+        shininess: 65,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      solidMesh = new THREE.Mesh(geom, mat);
+
+      const solidEdges = new THREE.EdgesGeometry(geom, 20);
+      solidMesh.add(new THREE.LineSegments(solidEdges, new THREE.LineBasicMaterial({ color: 0x0f172a })));
+      rotPivotGroup.add(solidMesh);
+
+      // Tracking Red Dot placed on a corner NOT lying on the active axis
+      const markerGeom = new THREE.SphereGeometry(0.16, 20, 20);
+      const markerMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      const cornerMarker = new THREE.Mesh(markerGeom, markerMat);
+
+      if (currentRotSolid.id === 'cube') {
+        cornerMarker.position.set(1.25, 1.25, 1.25);
+      } else {
+        cornerMarker.position.set(1.85 * Math.sin((2 * Math.PI) / 3), 1.5, 1.85 * Math.cos((2 * Math.PI) / 3));
+      }
+      rotPivotGroup.add(cornerMarker);
+
+      rootGroup.add(rotPivotGroup);
+      renderUI();
+    }
+
+    function setRotationAngle(deg) {
+      currentRotDeg = Math.max(0, Math.min(360, deg));
+      if (rotPivotGroup) {
+        const rad = (currentRotDeg * Math.PI) / 180;
+        const axisUnitVec = getNormalizedAxisVector();
+        rotPivotGroup.quaternion.setFromAxisAngle(axisUnitVec, rad);
+      }
+      updateRotationalReadout();
+    }
+
+    function onRotSliderChange(val) {
+      isAnimatingRot = false;
+      setRotationAngle(Number(val));
+    }
+
+    function stepNextSymmetry() {
+      const cfg = getActiveRotConfig();
+      const step = cfg.stepDeg;
+      if (currentRotDeg >= 360 - 0.5) {
+        setRotationAngle(0);
+      }
+      const next = Math.min(360, Math.floor((currentRotDeg + 1) / step + 1) * step);
+      targetRotDeg = next;
+      isAnimatingRot = true;
+    }
+
+    function playFull360() {
+      setRotationAngle(0);
+      targetRotDeg = 360;
+      isAnimatingRot = true;
+    }
+
+    function resetRotationAngle() {
+      isAnimatingRot = false;
+      setRotationAngle(0);
+    }
+
+    function updateRotationalReadout() {
+      const rounded = Math.round(currentRotDeg);
+      document.getElementById('rotAngleText').textContent = `${rounded}°`;
+      document.getElementById('rotSlider').value = rounded;
+
+      const cfg = getActiveRotConfig();
+      const matchAngles = cfg.matchAngles;
+      const matchedAngle = matchAngles.find(a => Math.abs(rounded - a) <= 1);
+      const badge = document.getElementById('matchBadge');
+      const chipsContainer = document.getElementById('angleChips');
+      const stepBtn = document.getElementById('stepRotBtn');
+
+      if (isQuizMode) {
+        badge.textContent = rounded === 0 ? 'Start (0°)' : 'Quiz Mode';
+        badge.classList.remove('matched');
+        chipsContainer.innerHTML = '';
+        stepBtn.style.display = 'none';
+      } else {
+        stepBtn.style.display = 'block';
+        if (rounded === 0) {
+          badge.textContent = 'Start Position (0°)';
+          badge.classList.add('matched');
+        } else if (matchedAngle) {
+          const matchIndex = matchAngles.indexOf(matchedAngle) + 1;
+          badge.textContent = `✓ Match #${matchIndex} (${matchedAngle}°)`;
+          badge.classList.add('matched');
+        } else {
+          badge.textContent = 'Rotating...';
+          badge.classList.remove('matched');
+        }
+
+        chipsContainer.innerHTML = matchAngles.map((ang, idx) => {
+          const isHit = rounded >= ang - 1;
+          return `<button class="angle-chip ${isHit ? 'hit' : ''}" onclick="jumpToAngle(${ang})">#${idx + 1}: ${ang}°</button>`;
+        }).join('');
+      }
+    }
+
+    function jumpToAngle(deg) {
+      isAnimatingRot = false;
+      setRotationAngle(deg);
+    }
+
+    // ==========================================
+    // 9. iGCSE PAST PAPER QUESTIONS 3D BUILDER
+    // ==========================================
+    function loadIgcseQuestion(qId) {
+      currentIgcseQ = IGCSE_QUESTIONS.find(q => q.id === qId);
+      clearRootGroup();
+
+      let geom;
+      const planes = [];
+
+      if (qId === 'igcse_q1') {
+        geom = new THREE.ConeGeometry(2.15, 3.1, 4);
+        geom.rotateY(Math.PI / 4);
+        [
+          { w: 3.8, h: 3.9, hex: 0xef4444, ry: Math.PI / 2 },
+          { w: 3.8, h: 3.9, hex: 0x3b82f6, ry: 0 },
+          { w: 4.9, h: 3.9, hex: 0xf59e0b, ry: Math.PI / 4 },
+          { w: 4.9, h: 3.9, hex: 0x8b5cf6, ry: -Math.PI / 4 }
+        ].forEach(cfg => {
+          const p = createPlaneObject(cfg.w, cfg.h, cfg.hex);
+          p.rotation.y = cfg.ry;
+          planes.push(p);
+        });
+      } else if (qId === 'igcse_q2') {
+        geom = new THREE.BoxGeometry(2.0, 3.6, 2.0);
+        const pMid = createPlaneObject(2.8, 2.8, 0x10b981);
+        pMid.rotation.x = Math.PI / 2;
+        planes.push(pMid);
+
+        [
+          { w: 2.8, h: 4.2, hex: 0xef4444, ry: 0 },
+          { w: 2.8, h: 4.2, hex: 0x3b82f6, ry: Math.PI / 2 },
+          { w: 3.5, h: 4.2, hex: 0xf59e0b, ry: Math.PI / 4 },
+          { w: 3.5, h: 4.2, hex: 0x8b5cf6, ry: -Math.PI / 4 }
+        ].forEach(cfg => {
+          const p = createPlaneObject(cfg.w, cfg.h, cfg.hex);
+          p.rotation.y = cfg.ry;
+          planes.push(p);
+        });
+      } else if (qId === 'igcse_q3') {
+        geom = buildPlaneSolidGeometry('rect_pyramid');
+        const p1 = createPlaneObject(2.8, 3.8, 0xef4444);
+        p1.rotation.y = Math.PI / 2;
+        const p2 = createPlaneObject(4.3, 3.8, 0x10b981);
+        planes.push(p1, p2);
+      } else if (qId === 'igcse_q4') {
+        geom = new THREE.CylinderGeometry(1.85, 1.85, 3.2, 3);
+        const pMid = createPlaneObject(4.2, 4.2, 0x10b981);
+        pMid.rotation.x = Math.PI / 2;
+        planes.push(pMid);
+
+        [
+          { hex: 0x2563eb, ry: Math.PI / 2 },
+          { hex: 0xf59e0b, ry: Math.PI / 6 },
+          { hex: 0x8b5cf6, ry: -Math.PI / 6 }
+        ].forEach(cfg => {
+          const p = createPlaneObject(4.1, 4.0, cfg.hex);
+          p.rotation.y = cfg.ry;
+          planes.push(p);
+        });
+      } else if (qId === 'igcse_q5') {
+        geom = new THREE.CylinderGeometry(1.75, 1.75, 3.0, 6);
+        const pMid = createPlaneObject(4.2, 4.2, 0x10b981);
+        pMid.rotation.x = Math.PI / 2;
+        planes.push(pMid);
+
+        [0, Math.PI / 3, -Math.PI / 3].forEach((ry, idx) => {
+          const colors = [0xef4444, 0x3b82f6, 0xf59e0b];
+          const p = createPlaneObject(4.1, 3.7, colors[idx]);
+          p.rotation.y = ry;
+          planes.push(p);
+        });
+
+        [Math.PI / 6, Math.PI / 2, -Math.PI / 6].forEach((ry, idx) => {
+          const colors = [0x8b5cf6, 0xec4899, 0x06b6d4];
+          const p = createPlaneObject(3.7, 3.7, colors[idx]);
+          p.rotation.y = ry;
+          planes.push(p);
+        });
+      } else if (qId === 'igcse_q6') {
+        geom = new THREE.BoxGeometry(2.35, 2.35, 2.35);
+
+        const ax1 = createPlaneObject(3.15, 3.15, 0xef4444);
+        ax1.rotation.y = Math.PI / 2;
+        const ax2 = createPlaneObject(3.15, 3.15, 0x10b981);
+        ax2.rotation.x = Math.PI / 2;
+        const ax3 = createPlaneObject(3.15, 3.15, 0x3b82f6);
+        planes.push(ax1, ax2, ax3);
+
+        const d1 = createPlaneObject(3.85, 3.15, 0xf59e0b);
+        d1.rotation.y = Math.PI / 4;
+        const d2 = createPlaneObject(3.85, 3.15, 0xf59e0b);
+        d2.rotation.y = -Math.PI / 4;
+
+        const d3 = createPlaneObject(3.15, 3.85, 0x8b5cf6);
+        d3.rotation.x = Math.PI / 4;
+        const d4 = createPlaneObject(3.15, 3.85, 0x8b5cf6);
+        d4.rotation.x = -Math.PI / 4;
+
+        const d5 = createPlaneObject(3.15, 3.85, 0xec4899);
+        d5.rotation.order = 'ZYX';
+        d5.rotation.y = Math.PI / 2;
+        d5.rotation.z = Math.PI / 4;
+
+        const d6 = createPlaneObject(3.15, 3.85, 0xec4899);
+        d6.rotation.order = 'ZYX';
+        d6.rotation.y = Math.PI / 2;
+        d6.rotation.z = -Math.PI / 4;
+
+        planes.push(d1, d2, d3, d4, d5, d6);
+      }
+
+      const mat = new THREE.MeshPhongMaterial({
+        color: currentIgcseQ.solidTint,
+        transparent: true,
+        opacity: isXray ? 0.22 : 0.62,
+        shininess: 60,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      solidMesh = new THREE.Mesh(geom, mat);
+
+      const edges = new THREE.EdgesGeometry(geom, 20);
+      solidMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a })));
+      rootGroup.add(solidMesh);
+
+      planeMeshes = planes;
+      planeMeshes.forEach(p => {
+        p.visible = !isQuizMode;
+        rootGroup.add(p);
+      });
+
+      renderUI();
+    }
+
+    function updateIgcsePlaneVisibility() {
+      planeMeshes.forEach(p => {
+        p.visible = !isQuizMode;
+      });
+    }
+
+    // ==========================================
+    // 10. SHARED UI RENDERING & CONTROLS
+    // ==========================================
+    function renderUI() {
+      const grid = document.getElementById('shapeGrid');
+      const countBox = document.getElementById('countBox');
+      const descEl = document.getElementById('solidDesc');
+
+      document.getElementById('step1Title').textContent = '1. Select a 3D Solid';
+
+      if (appMode === 'plane') {
+        grid.innerHTML = PLANE_SOLIDS.map(s => `
+          <button
+            class="shape-card ${s.id === currentPlaneSolid.id ? 'active' : ''}"
+            style="--c-main: ${s.color}"
+            onclick="loadPlaneSolid('${s.id}')"
+          >
+            <div class="shape-icon">${s.icon}</div>
+            <div>
+              <div class="shape-name">${s.name}</div>
+              <span class="shape-badge">${isQuizMode ? '???' : s.badgeText}</span>
+            </div>
+          </button>
+        `).join('');
+
+        const list = document.getElementById('planeList');
+        list.innerHTML = currentPlaneSolid.planes.map((p, idx) => `
+          <button
+            class="plane-toggle ${planeStates[idx] ? 'on' : ''}"
+            style="--p-color: ${p.color}"
+            onclick="toggleSinglePlane(${idx})"
+          >
+            <span class="color-dot"></span>
+            <span>${p.name}</span>
+          </button>
+        `).join('');
+
+        const hasSweep = currentPlaneSolid.id === 'cone' || currentPlaneSolid.id === 'cylinder';
+        document.getElementById('sweepSliderBox').style.display = hasSweep ? 'block' : 'none';
+
+        document.getElementById('solidTitle').textContent = currentPlaneSolid.name;
+
+        if (isQuizMode) {
+          descEl.textContent = 'Total count is locked in Quiz Mode. Click the plane buttons on the left to toggle planes of symmetry on the 3D solid, then enter the password to reveal the total.';
+          document.getElementById('solidCount').textContent = '?';
+          document.getElementById('countLabel').textContent = 'Planes of Symmetry';
+          countBox.className = 'count-callout locked-callout';
+        } else {
+          descEl.textContent = currentPlaneSolid.description;
+          document.getElementById('solidCount').textContent = currentPlaneSolid.countText;
+          document.getElementById('countLabel').textContent = 'Planes of Symmetry';
+          countBox.className = 'count-callout';
+        }
+      } else if (appMode === 'rotational') {
+        const activeAxisKey = selectedRotAxes[currentRotSolid.id] || currentRotSolid.defaultAxis;
+        const activeCfg = getActiveRotConfig();
+        const axisEntries = Object.entries(currentRotSolid.axes);
+
+        document.getElementById('extBadge').textContent = currentRotSolid.axisTypesCount;
+        document.getElementById('rotSectionTitle').textContent = activeCfg.sectionTitle;
+
+        const axisGroup = document.getElementById('axisToggleGroup');
+        axisGroup.innerHTML = axisEntries.map(([key, cfg]) => `
+          <button
+            class="axis-toggle-btn ${key === activeAxisKey ? 'active' : ''}"
+            onclick="setRotationAxis('${key}')"
+          >
+            ${cfg.shortTitle}<br><small>${cfg.subText}</small>
+          </button>
+        `).join('');
+
+        grid.innerHTML = ROTATIONAL_SOLIDS.map(s => `
+          <button
+            class="shape-card ${s.id === currentRotSolid.id ? 'active' : ''}"
+            style="--c-main: ${s.color}"
+            onclick="loadRotationalSolid('${s.id}')"
+          >
+            <div class="shape-icon">${s.icon}</div>
+            <div>
+              <div class="shape-name">${s.name}</div>
+              <span class="shape-badge">${isQuizMode ? '???' : s.badgeText}</span>
+            </div>
+          </button>
+        `).join('');
+
+        document.getElementById('stepRotBtn').textContent =
+          `▶ Step +${activeCfg.stepDeg}° (Next Match)`;
+
+        document.getElementById('solidTitle').textContent =
+          `${currentRotSolid.name} — Rotational Symmetry (${activeCfg.label})`;
+
+        if (isQuizMode) {
+          descEl.textContent = 'Quiz Mode is ON. Use the rotation slider or "Play 360° Turn" and count how many times the solid matches its starting dashed outline, then enter the password to check.';
+          document.getElementById('solidCount').textContent = '?';
+          document.getElementById('countLabel').textContent = 'Order of Symmetry';
+          countBox.className = 'count-callout locked-callout';
+        } else {
+          descEl.textContent = activeCfg.description;
+          document.getElementById('solidCount').textContent = activeCfg.order;
+          document.getElementById('countLabel').textContent = 'Order of Symmetry';
+          countBox.className = 'count-callout ext-callout';
+        }
+
+        updateRotationalReadout();
+      } else if (appMode === 'igcse') {
+        const qGrid = document.getElementById('igcseQGrid');
+        qGrid.innerHTML = IGCSE_QUESTIONS.map(q => `
+          <button
+            class="igcse-q-btn ${q.id === currentIgcseQ.id ? 'active' : ''}"
+            onclick="loadIgcseQuestion('${q.id}')"
+          >
+            <span class="igcse-q-num">${q.shortLabel}</span>
+            <span class="igcse-q-tag">${q.tag}</span>
+          </button>
+        `).join('');
+
+        document.getElementById('igcseRefLabel').textContent = currentIgcseQ.paperRef;
+        document.getElementById('igcseTopicTag').textContent = currentIgcseQ.topic;
+        document.getElementById('igcseTotalMarks').textContent = currentIgcseQ.totalMarks;
+        document.getElementById('igcsePrompt').textContent = currentIgcseQ.prompt;
+        document.getElementById('igcseParts').innerHTML = currentIgcseQ.parts.map(pt => `
+          <div class="exam-part">
+            <span>${pt.label}</span>
+            <span class="exam-part-marks">${pt.marks}</span>
+          </div>
+        `).join('');
+
+        document.getElementById('igcseLockedView').style.display = isQuizMode ? 'block' : 'none';
+        document.getElementById('igcseUnlockedView').style.display = isQuizMode ? 'none' : 'block';
+
+        if (!isQuizMode) {
+          document.getElementById('igcseFinalAns').textContent = `✓ Final Answer: ${currentIgcseQ.finalAnswerSummary}`;
+          document.getElementById('igcseSteps').innerHTML = currentIgcseQ.steps.map(step => `
+            <div class="solution-step">${step}</div>
+          `).join('');
+        }
+
+        document.getElementById('solidTitle').textContent = `${currentIgcseQ.shortLabel}: ${currentIgcseQ.tag} (${currentIgcseQ.paperRef})`;
+        if (isQuizMode) {
+          descEl.textContent = 'Quiz Mode is ON. Rotate the 3D model to visualize the cuts and rotational axis, then enter the teacher password to reveal the worked solution and 3D planes.';
+          document.getElementById('solidCount').textContent = '?';
+          document.getElementById('countLabel').textContent = 'Answer Locked';
+          countBox.className = 'count-callout locked-callout';
+        } else {
+          descEl.textContent = currentIgcseQ.bannerTakeaway;
+          document.getElementById('solidCount').textContent = currentIgcseQ.calloutValue;
+          document.getElementById('countLabel').textContent = currentIgcseQ.calloutLabel;
+          countBox.className = 'count-callout igcse-callout';
+        }
+      }
+    }
+
+    function toggleSinglePlane(idx) {
+      planeStates[idx] = !planeStates[idx];
+      planeMeshes[idx].visible = planeStates[idx];
+      renderUI();
+    }
+
+    function setAllPlanes(visible) {
+      planeStates = planeStates.map(() => visible);
+      planeMeshes.forEach(m => (m.visible = visible));
+      renderUI();
+    }
+
+    function updateSweepPlane(deg) {
+      document.getElementById('sweepDeg').textContent = `${deg}°`;
+      if (sweepPlaneMesh && sweepPlaneIndex !== -1) {
+        sweepPlaneMesh.rotation.y = (Number(deg) * Math.PI) / 180;
+        if (!planeStates[sweepPlaneIndex]) {
+          planeStates[sweepPlaneIndex] = true;
+          sweepPlaneMesh.visible = true;
+          renderUI();
+        }
+      }
+    }
+
+    function toggleAutoRotate() {
+      isAutoRotate = !isAutoRotate;
+      const btn = document.getElementById('rotateBtn');
+      btn.textContent = isAutoRotate ? '⟳ Auto-Spin: ON' : '⏸ Auto-Spin: OFF';
+      btn.classList.toggle('active', isAutoRotate);
+    }
+
+    function toggleXray() {
+      isXray = !isXray;
+      if (solidMesh) {
+        solidMesh.material.opacity = isXray ? 0.22 : 0.62;
+      }
+      document.getElementById('xrayBtn').classList.toggle('active', isXray);
+    }
+
+    // Animation Loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (appMode === 'plane' || appMode === 'igcse') {
+        if (isAutoRotate && !isDragging) {
+          rootGroup.rotation.y += 0.005;
+        }
+      } else if (appMode === 'rotational' && isAnimatingRot) {
+        const diff = targetRotDeg - currentRotDeg;
+        if (Math.abs(diff) <= 1.5) {
+          setRotationAngle(targetRotDeg);
+          isAnimatingRot = false;
+        } else {
+          setRotationAngle(currentRotDeg + Math.sign(diff) * 1.5);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Initialize App
+    updateCameraPosition();
+    updateQuizHeaderButton();
+    loadPlaneSolid('cuboid');
+    animate();
+  </script>
+</body>
+</html>
